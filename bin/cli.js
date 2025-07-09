@@ -38,7 +38,7 @@ let config = {
     langs: args._,
     translate: !!args.t,
     file: args.f || './src',
-    method: args.m || '__affiliate'
+    method: args.m || '__lang'
 };
 
 if (fs.existsSync('locale.config.js')) {
