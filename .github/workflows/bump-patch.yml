@@ -56,8 +56,3 @@ jobs:
         run: |
           git tag ${{ steps.bump.outputs.new_tag }}
           git push origin ${{ steps.bump.outputs.new_tag }}
-
-      - name: Publish to npm
-        run: |
-          npm version ${{ steps.bump.outputs.new_tag }} --no-git-tag-version
-          npm publish --access public
