@@ -1,6 +1,6 @@
 {
     "name": "innoboxrr-locale-generator",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "CLI para generar archivos de traducción en proyectos Vue o similares",
     "main": "index.js",
     "bin": {
