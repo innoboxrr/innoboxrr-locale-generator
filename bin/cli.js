@@ -3,81 +3,89 @@
 const fs = require('fs');
 const path = require('path');
 const minimist = require('minimist');
+
+const { resolveConfig, DEFAULTS } = require('../lib/config');
 const { extractStrings, extractStringsFromDirectory } = require('../lib/extractor');
 const { generateLocaleJSON } = require('../lib/localeGenerator');
 
-// Cargar .env si existe
 require('dotenv').config();
 
-const args = minimist(process.argv.slice(2));
+const args = minimist(process.argv.slice(2), { boolean: ['t', 'h', 'help', 'v', 'verbose'] });
 
-// Mostrar ayuda
 if (args.h || args.help) {
     console.log(`
-🧰 locale-gen - Generador de traducciones
+locale-gen - Generador de archivos de traduccion
 
 Uso:
   npx locale-gen [idiomas] [opciones]
 
 Ejemplo:
-  npx locale-gen es fr -t -f ./src -m __affiliate
+  npx locale-gen es en -t -f ./src -m t
 
 Opciones:
-  -t            Traducción automática con Google Translate
-  -f [path]     Ruta del archivo/directorio (por defecto ./src)
-  -m [método]   Método a buscar, por defecto __affiliate
-  -h, --help    Mostrar esta ayuda
+  -t            Traduce con Google Translate (necesita GOOGLE_TRANSLATE_KEY)
+  -f [ruta]     Archivo o directorio a analizar. Por defecto ${DEFAULTS.sourcePath}
+  -o [ruta]     Donde escribir los .json. Por defecto ${DEFAULTS.outputPath}
+  -m [metodo]   Metodo a buscar. Por defecto ${DEFAULTS.method}
+  -v            Lista las cadenas encontradas en cada archivo
+  -h, --help    Esta ayuda
 
-También puedes usar locale.config.js
+Tambien se puede configurar en locale.config.js:
+
+  module.exports = {
+      languages: ['es', 'en'],
+      method: 't',
+      sourcePath: './src',
+      outputPath: './src/locales',
+      translate: false,
+  }
 `);
+
     process.exit(0);
 }
 
-// Leer archivo de configuración si existe
-let config = {
-    langs: args._,
-    translate: !!args.t,
-    file: args.f || './src',
-    method: args.m || '__lang'
-};
+const config = resolveConfig(args);
 
-if (fs.existsSync('locale.config.js')) {
-    const userConfig = require(path.resolve('locale.config.js'));
-    config = {
-        langs: userConfig.languages || config.langs,
-        translate: userConfig.translate ?? config.translate,
-        file: userConfig.sourcePath || config.file,
-        method: userConfig.method || config.method
-    };
-}
-
-if (!config.langs || config.langs.length === 0) {
+if (! config.languages?.length) {
     console.error('[ERROR] Debes especificar al menos un idioma.');
     process.exit(1);
 }
 
-// Extraer cadenas
-const absPath = path.resolve(config.file);
-let strings = [];
+const source = path.resolve(config.sourcePath);
 
-if (fs.statSync(absPath).isDirectory()) {
-    strings = extractStringsFromDirectory(absPath, config.method);
-} else {
-    strings = extractStrings(absPath, config.method);
+if (! fs.existsSync(source)) {
+    console.error(`[ERROR] No existe la ruta ${source}.`);
+    process.exit(1);
 }
 
-strings = [...new Set(strings)];
+const verbose = Boolean(args.v || args.verbose);
 
-if (!strings.length) {
-    console.log('[WARNING] No se encontraron cadenas.');
+const onFile = verbose
+    ? (file, found) => console.log(`[INFO] ${file}: ${found.length} cadenas`)
+    : undefined;
+
+const strings = [...new Set(
+    fs.statSync(source).isDirectory()
+        ? extractStringsFromDirectory(source, config.method, { onFile })
+        : extractStrings(source, config.method)
+)];
+
+if (! strings.length) {
+    console.log(`[AVISO] No se encontraron cadenas con el metodo '${config.method}' en ${source}.`);
     process.exit(0);
 }
 
-const localesDir = path.join('src', 'locales');
+console.log(`[INFO] ${strings.length} cadenas con el metodo '${config.method}'.`);
 
-// Generar traducciones
 (async () => {
-    for (const lang of config.langs) {
-        await generateLocaleJSON(strings, lang, config.translate, localesDir);
+    try {
+        for (const lang of config.languages) {
+            await generateLocaleJSON(strings, lang, config.translate, path.resolve(config.outputPath));
+        }
+    } catch (error) {
+        // Sin esto, un fallo de la API de traduccion salia como un rechazo no
+        // capturado y el proceso terminaba con codigo 0.
+        console.error(`[ERROR] ${error.message}`);
+        process.exit(1);
     }
 })();

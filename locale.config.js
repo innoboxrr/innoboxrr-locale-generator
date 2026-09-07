@@ -1,6 +1,12 @@
+/**
+ * Configuracion de locale-gen para este proyecto.
+ *
+ * Lo que no se declare aqui toma el valor por defecto del paquete.
+ */
 module.exports = {
-    method: '__t',
-    sourcePath: './src',
     languages: ['es', 'en'],
-    translate: true
+    method: 't',
+    sourcePath: './src',
+    outputPath: './src/locales',
+    translate: false,
 };
