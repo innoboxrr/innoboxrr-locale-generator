@@ -2,6 +2,7 @@
   "name": "innoboxrr-locale-generator",
   "version": "2.0.0",
   "description": "CLI para generar archivos de traducción en proyectos Vue o similares",
+  "type": "commonjs",
   "main": "index.js",
   "bin": {
     "locale-gen": "./bin/cli.js"
@@ -39,6 +40,6 @@
     "vitest": "^3.0.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }
