@@ -1,62 +1,64 @@
 # 🈯 Locale Generator
 
-> Herramienta CLI para extraer cadenas traducibles de tu proyecto (como `__t("...")` o `__lang("...")`), traducirlas automáticamente y generar archivos JSON de localización para Vue o cualquier entorno JavaScript.
+> Herramienta CLI para extraer las cadenas traducibles de tu proyecto (las llamadas a `t('...')`), traducirlas con Google Translate si quieres y generar un JSON de traducciones por idioma.
+
+Es la que usa el módulo de interfaz que genera [LaraPack](https://github.com/innoboxrr/larapack-generator) con `npm run locale`, y el método por defecto, `t`, es el que exporta [`innoboxrr-i18n`](https://www.npmjs.com/package/innoboxrr-i18n).
+
+Documentación completa del ecosistema, en español y en inglés: <https://innoboxrr.github.io/docs/interfaz/http-rutas-i18n>.
 
 ---
 
-## 🚀 Características
+## 🚀 Qué hace
 
-* 📦 Extrae cadenas de texto desde archivos `.vue`, `.js`, `.ts`, `.html`, `.py`
-* 🌍 Traduce automáticamente con la API de Google Translate (opcional)
-* 🧠 Evita duplicados automáticamente
-* 📁 Genera archivos `locales/{idioma}.json` listos para `vue-i18n`, Nuxt, etc.
-* 🛠️ Configuración por CLI o por archivo `locale.config.js`
-* ✅ Compatible con `.env` para tu clave de API
+* 📦 Busca las llamadas al método (por defecto `t`) en archivos `.vue`, `.js`, `.jsx`, `.ts`, `.tsx`, `.mjs`, `.html` y `.php`.
+* 🌍 Traduce las claves nuevas con la API de Google Translate (opcional, con `-t`).
+* 🧠 Conserva lo que ya estaba traducido y no duplica claves.
+* 📁 Escribe un `{idioma}.json` por idioma, por defecto en `./src/locales`.
+* 🛠️ Se configura por línea de comandos o con `locale.config.js`.
 
 ---
 
 ## 📦 Instalación
 
 ```bash
-npm install innoboxrr-locale-generator
+npm install --save-dev innoboxrr-locale-generator
 ```
 
 ---
 
-## ⚙️ Uso básico
+## ⚙️ Uso
 
 ```bash
-npx locale-gen es fr -t -f ./src -m __t
+npx locale-gen es en -f ./src -o ./src/locales
 ```
 
----
-
-### 🧾 Parámetros
-
-| Opción         | Descripción                                                    |
-| -------------- | -------------------------------------------------------------- |
-| `es fr`        | Idiomas destino separados por espacio (`es`, `en`, `fr`, etc.) |
-| `-t`           | Traducción automática usando Google Translate                  |
-| `-f`           | Ruta del archivo o carpeta a analizar (por defecto: `./src`)   |
-| `-m`           | Método o helper a buscar (por defecto: `__lang`)          |
-| `-h`, `--help` | Muestra la ayuda                                               |
+| Opción | Qué hace | Por defecto |
+| --- | --- | --- |
+| `es en` | Idiomas destino, separados por espacio | `es en` |
+| `-f [ruta]` | Archivo o directorio a analizar | `./src` |
+| `-o [ruta]` | Dónde escribir los `.json` | `./src/locales` |
+| `-m [método]` | Método cuyas llamadas se buscan | `t` |
+| `-t` | Traduce las claves nuevas con Google Translate | no |
+| `-v` | Lista las cadenas encontradas en cada archivo | no |
+| `-h`, `--help` | Muestra la ayuda | |
 
 ---
 
-## 🛠️ Uso con archivo de configuración
+## 🛠️ Con archivo de configuración
 
-Puedes crear un archivo `locale.config.js` en la raíz de tu proyecto con esta forma:
+Crea `locale.config.js` en la raíz del proyecto. La línea de comandos gana sobre el archivo, y el archivo sobre los valores por defecto:
 
 ```js
 module.exports = {
-    method: '__lang',
-    sourcePath: './src',
     languages: ['es', 'en'],
-    translate: true
+    method: 't',
+    sourcePath: './src',
+    outputPath: './src/locales',
+    translate: false,
 };
 ```
 
-Después, simplemente ejecuta:
+Y ejecuta:
 
 ```bash
 npx locale-gen
@@ -64,51 +66,32 @@ npx locale-gen
 
 ---
 
-## 🌐 .env
+## 🌐 Traducción automática
 
-Crea un archivo `.env` en la raíz con tu API key de Google Translate:
+Con `-t` (o `translate: true`), la herramienta pide a Google Translate las claves que aún no tienen traducción. Pon tu API key en un `.env` en la raíz:
 
 ```
 GOOGLE_TRANSLATE_KEY=tu-clave-api-de-google
 ```
 
+El paquete de Laravel [`innoboxrr/locale-generator`](https://github.com/innoboxrr/locale-generator) usa otra variable, `GOOGLE_TRANSLATE_API_KEY`: si usas los dos, define ambas.
+
 ---
 
-## 🧪 Ejemplo de resultado
+## 🧪 Resultado
 
-Al ejecutar el CLI, se genera un archivo como `src/locales/es.json` con contenido como este:
+Para un componente con `t('Welcome to the blog')`, `src/locales/es.json` queda así:
 
 ```json
 {
-    "Welcome to the blog": "Bienvenido al blog",
-    "Learn Python easily": "Aprende Python fácilmente"
+    "Welcome to the blog": "Bienvenido al blog"
 }
 ```
 
----
-
-## 📁 Estructura típica del proyecto
-
-```
-tu-proyecto/
-├── src/
-│   ├── componentes/
-│   └── locales/
-│       ├── es.json
-│       └── en.json
-├── .env
-├── locale.config.js
-```
-
----
-
-## 🧑‍💻 Contribuciones
-
-¿Ideas, bugs, mejoras? ¡Bienvenidas! Abre un issue o haz un PR 🚀
+Sin `-t`, las claves nuevas se añaden con el valor vacío (`""`), que `innoboxrr-i18n` trata como pendiente de traducir.
 
 ---
 
 ## 📄 Licencia
 
-MIT © Raúl – Úsalo con libertad y crea productos multilingües de calidad.
-
+MIT
