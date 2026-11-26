@@ -10,3 +10,7 @@ on:
 jobs:
     tests:
         uses: innoboxrr/.github/.github/workflows/node-tests.yml@main
+        # Vitest 5 exige Node ^22.12 || >=24, y Node 20 es EOL desde
+        # 2026-04-30: se sacan del default (20, 22, 24) las que ya no aplican.
+        with:
+            node-versions: '["22", "24"]'
